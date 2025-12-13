@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-project(qcodetexteditwidget_test VERSION 0.5 LANGUAGES CXX)
+project(qcodetexteditwidget_test VERSION 0.5.1 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)

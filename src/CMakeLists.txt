@@ -32,7 +32,7 @@ target_link_libraries(qcodeeditwidget PRIVATE
 )
 
 set_target_properties(qcodeeditwidget PROPERTIES
-    VERSION "0.5.0"
+    VERSION "0.5.1"
     SOVERSION "0.5"
 )
 
