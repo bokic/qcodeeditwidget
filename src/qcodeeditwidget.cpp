@@ -1,4 +1,4 @@
-#include <qcodeeditwidget.h>
+#include <QCodeEditWidget/qcodeeditwidget.h>
 
 #include <algorithm>
 

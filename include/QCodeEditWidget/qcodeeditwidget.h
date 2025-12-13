@@ -8,9 +8,19 @@
 #include <QList>
 #include <QPen>
 
-class QCodeEditWidgetLine;
+#ifndef QCEW_STATIC
+#ifdef QCEW_SHARED_EXPORT
+#define QCEW_EXPORT Q_DECL_EXPORT
+#else
+#define QCEW_EXPORT Q_DECL_IMPORT
+#endif
+#else
+#define QCEW_EXPORT
+#endif
 
-class QTextParserLine
+class QCEW_EXPORT QCodeEditWidgetLine;
+
+class QCEW_EXPORT QTextParserLine
 {
 public:
     enum QTextParserLineType
@@ -34,7 +44,7 @@ public:
 
 typedef QList<QTextParserLine> QTextParserLines;
 
-class QCodeEditWidgetTextPosition final
+class QCEW_EXPORT QCodeEditWidgetTextPosition final
 {
 public:
     qsizetype m_Row = 1;
@@ -46,7 +56,7 @@ inline bool operator==(const QCodeEditWidgetTextPosition& a, const QCodeEditWidg
     return ((a.m_Row == b.m_Row)&&(a.m_Column == b.m_Column));
 }
 
-class QTextParserColorItem final
+class QCEW_EXPORT QTextParserColorItem final
 {
 public:
     int index = -1;
@@ -54,7 +64,7 @@ public:
     QColor foregroundColor;
 };
 
-class QCodeEditWidget final: public QAbstractScrollArea
+class QCEW_EXPORT QCodeEditWidget final: public QAbstractScrollArea
 {
     Q_OBJECT
     Q_PROPERTY(QString Text READ text WRITE setText DESIGNABLE false CONSTANT)
@@ -135,7 +145,7 @@ private:
     QCodeEditWidgetTextPosition m_SelectionPosition;
 };
 
-class QCodeEditWidgetLine final: public QTextParserLine
+class QCEW_EXPORT QCodeEditWidgetLine final: public QTextParserLine
 {
 public:
     QCodeEditWidget::QBreakpointType breakpointType = QCodeEditWidget::QBreakpointTypeNoBreakpoint;

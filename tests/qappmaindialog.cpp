@@ -1,5 +1,5 @@
 #include "qappmaindialog.h"
-#include <qcodeeditwidget.h>
+#include <QCodeEditWidget/qcodeeditwidget.h>
 #include "ui_qappmaindialog.h"
 
 QAppMainDialog::QAppMainDialog(QWidget *parent) :
