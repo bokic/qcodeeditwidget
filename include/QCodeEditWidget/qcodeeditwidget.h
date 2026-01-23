@@ -59,9 +59,18 @@ inline bool operator==(const QCodeEditWidgetTextPosition& a, const QCodeEditWidg
 class QCEW_EXPORT QTextParserColorItem final
 {
 public:
+    QTextParserColorItem(int index, int length, QColor foregroundColor, QColor backgroundColor)
+        : index(index)
+        , length(length)
+        , foregroundColor(foregroundColor)
+        , backgroundColor(backgroundColor)
+    {
+    };
+
     int index = -1;
     int length = -1;
     QColor foregroundColor;
+    QColor backgroundColor;
 };
 
 class QCEW_EXPORT QCodeEditWidget final: public QAbstractScrollArea
@@ -88,6 +97,7 @@ public:
     bool canUndo() const;
     bool canRedo() const;
     bool hasSelection() const;
+    QList<QCodeEditWidgetLine> &lines();
 
 public slots:
     void setText(QString text);

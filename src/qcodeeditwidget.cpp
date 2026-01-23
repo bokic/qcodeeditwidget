@@ -11,6 +11,7 @@
 #include <QKeyEvent>
 #include <QEvent>
 #include <QImage>
+#include <QColor>
 
 #include <math.h>
 
@@ -198,8 +199,8 @@ QCodeEditWidget::QCodeEditWidget(QWidget *parent)
     , m_TextFont(QFont("Courier", m_FontSize, QFont::Normal))
     , m_TextFontBold(QFont("Courier", m_FontSize, QFont::Bold))
 #elif defined Q_OS_LINUX
-    , m_TextFont(QFont("Source Code Pro", m_FontSize, QFont::Normal))
-    , m_TextFontBold(QFont("Source Code Pro", m_FontSize, QFont::Bold))
+    , m_TextFont(QFont("Droid Sans Mono", m_FontSize, QFont::Normal))
+    , m_TextFontBold(QFont("Droid Sans Mono", m_FontSize, QFont::Bold))
 #elif defined Q_OS_MACOS
     , m_TextFont(QFont("Monaco", m_FontSize, QFont::Normal))
     , m_TextFontBold(QFont("Monaco", m_FontSize, QFont::Bold))
@@ -676,7 +677,11 @@ void QCodeEditWidget::paintEvent(QPaintEvent *event)
     		painter.setPen(m_LineNumbersNormal);
     	}
 
-        painter.drawText(QRect(0, l_line * l_fontHeight, l_LineNumbersPanelWidth - 4, l_fontHeight), Qt::AlignRight, QString::number(m_ScrollYLinePos + l_line + 1));
+        int distance = painter.fontMetrics().horizontalAdvance(" ") * 4;
+        QTextOption option;
+        option.setTabStopDistance(distance);
+        option.setAlignment(Qt::AlignRight);
+        painter.drawText(QRect(0, l_line * l_fontHeight, l_LineNumbersPanelWidth - 4, l_fontHeight), QString::number(m_ScrollYLinePos + l_line + 1), option);
         if ((m_ScrollYLinePos + l_line + 1) == m_CarretPosition.m_Row)
     	{
     		painter.setFont(m_TextFont);
@@ -687,6 +692,7 @@ void QCodeEditWidget::paintEvent(QPaintEvent *event)
         int l_HorizontalValue = horizontalScrollBar()->value();
 
         QString l_Line = m_Lines.at(m_ScrollYLinePos + l_line).text;
+        const auto &l_LineColors = m_Lines.at(m_ScrollYLinePos + l_line).colors;
 
         // Paint selection background
         if ((has_selection)&&(m_ScrollYLinePos + l_line >= (selection_start_row - 1))&&(m_ScrollYLinePos + l_line <= (selection_end_row - 1)))
@@ -784,7 +790,7 @@ void QCodeEditWidget::paintEvent(QPaintEvent *event)
 
         l_Line = l_Line.left(l_HorizontalValue + l_CharsToDraw);
 
-        l_Line = l_Line.replace("\t", QString(m_tabSize, ' ')); // TODO: Properly align tabs.
+        //l_Line = l_Line.replace("\t", QString(m_tabSize, ' ')); // TODO: Properly align tabs.
 
         if (l_HorizontalValue > 0)
         {
@@ -803,7 +809,69 @@ void QCodeEditWidget::paintEvent(QPaintEvent *event)
         if (!l_Line.isEmpty())
         {
             QString text = l_Line;
-            painter.drawText(QRect(l_LineNumbersPanelWidth, l_line * l_fontHeight, viewport()->width(), l_fontHeight), Qt::AlignLeft, text);
+            int current_pos = 0;
+
+            if (!l_LineColors.isEmpty())
+            {
+                for (auto colorFormat: l_LineColors)
+                {
+                    if (colorFormat.index > current_pos)
+                    {
+                        int xPosStart = l_LineNumbersPanelWidth + l_fm.horizontalAdvance(text.left(current_pos)) - (m_ScrollXCharPos * l_fontWidth);
+
+                        painter.setPen(palette().text().color());
+
+                        auto textChunk = text.mid(current_pos, colorFormat.index - current_pos);
+
+                        int distance = painter.fontMetrics().horizontalAdvance(" ") * 4;
+                        QTextOption option;
+                        option.setTabStopDistance(distance);
+                        option.setAlignment(Qt::AlignLeft);
+                        painter.drawText(QRect(xPosStart, l_line * l_fontHeight, viewport()->width(), l_fontHeight), textChunk, option);
+                        current_pos  = colorFormat.index;
+                    }
+
+                    if (colorFormat.backgroundColor.isValid())
+                    {
+                        painter.setPen(Qt::NoPen);
+                        painter.setBrush(colorFormat.backgroundColor);
+
+                        int xPosStart = l_LineNumbersPanelWidth + l_fm.horizontalAdvance(text.left(colorFormat.index)) - (m_ScrollXCharPos * l_fontWidth);
+                        int xPosLen = l_fm.horizontalAdvance(text.mid(colorFormat.index, colorFormat.length)) - (m_ScrollXCharPos * l_fontWidth);
+
+                        painter.drawRect(xPosStart, l_line * l_fontHeight, xPosLen, l_fontHeight);
+                    }
+
+                    if (colorFormat.foregroundColor.isValid())
+                    {
+                        painter.setPen(colorFormat.foregroundColor);
+                    }
+                    else
+                    {
+                        painter.setPen(palette().text().color());
+                    }
+
+                    int xPosStart = l_LineNumbersPanelWidth + l_fm.horizontalAdvance(text.left(colorFormat.index)) - (m_ScrollXCharPos * l_fontWidth);
+
+                    auto textChunk = text.mid(colorFormat.index, colorFormat.length);
+                    int distance = painter.fontMetrics().horizontalAdvance(" ") * 4;
+                    QTextOption option;
+                    option.setTabStopDistance(distance);
+                    option.setAlignment(Qt::AlignLeft);
+                    painter.drawText(QRect(xPosStart, l_line * l_fontHeight, viewport()->width(), l_fontHeight), textChunk, option);
+                    current_pos  = colorFormat.index + colorFormat.length;
+                }
+            }
+            else
+            {
+                painter.setPen(palette().text().color());
+
+                int distance = painter.fontMetrics().horizontalAdvance(" ") * 4;
+                QTextOption option;
+                option.setTabStopDistance(distance);
+                option.setAlignment(Qt::AlignLeft);
+                painter.drawText(QRect(l_LineNumbersPanelWidth, l_line * l_fontHeight, viewport()->width(), l_fontHeight), text, option);
+            }
         }
     }
 
@@ -820,9 +888,9 @@ void QCodeEditWidget::paintEvent(QPaintEvent *event)
         painter.setBrush(oldBrush);
     }
 
-    if(m_Lines.count() - (viewport()->height() / 16) + 1 > 1)
+    if(m_Lines.count() - (viewport()->height() / l_fontHeight) + 1 > 1)
     {
-        verticalScrollBar()->setMaximum(m_Lines.count() - (viewport()->height() / 16));
+        verticalScrollBar()->setMaximum(m_Lines.count() - (viewport()->height() / l_fontHeight));
     }
     else
     {
@@ -840,9 +908,9 @@ void QCodeEditWidget::paintEvent(QPaintEvent *event)
         }
     }
 
-    if(max_LineSize - (viewport()->width() / 12) + 1 > 1)
+    if(max_LineSize - ((viewport()->width() - m_LineNumbersPanelWidth) / l_fontWidth) + 1 > 1)
     {
-        horizontalScrollBar()->setMaximum(max_LineSize - (viewport()->width() / 12));
+        horizontalScrollBar()->setMaximum(max_LineSize - ((viewport()->width() - m_LineNumbersPanelWidth) / l_fontWidth));
     }
     else
     {
@@ -943,7 +1011,7 @@ void QCodeEditWidget::mouseReleaseEvent(QMouseEvent *event)
 
         int l_LineHited = m_ScrollYLinePos + (event->position().y() / l_fontHeight);
 
-        if (l_LineHited < m_Lines.count())
+        if ((l_LineHited >= 0)&&(l_LineHited < m_Lines.count()))
         {
             emit breakpoint_change(l_LineHited + 1);
         }
@@ -1093,12 +1161,6 @@ void QCodeEditWidget::setText(QString text)
 
     updatePanelWidth();
 
-    QTextParserColorItem item;
-    item.foregroundColor = Qt::red;
-    item.index = 0;
-    item.length = 3;
-    m_Lines[0].colors.append(item);
-
     viewport()->update();
 }
 
@@ -1154,6 +1216,7 @@ bool QCodeEditWidget::canUndo() const
 {
     return false;
 }
+
 bool QCodeEditWidget::canRedo() const
 {
     return false;
@@ -1162,4 +1225,9 @@ bool QCodeEditWidget::canRedo() const
 bool QCodeEditWidget::hasSelection() const
 {
     return false;
+}
+
+QList<QCodeEditWidgetLine> &QCodeEditWidget::lines()
+{
+    return m_Lines;
 }
