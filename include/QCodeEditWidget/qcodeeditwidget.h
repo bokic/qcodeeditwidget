@@ -20,6 +20,12 @@
 
 class QCEW_EXPORT QCodeEditWidgetLine;
 
+class QCEW_EXPORT QCodeEditWidgetFormatter: public QObject
+{
+public:
+    virtual void format(QList<QCodeEditWidgetLine> &lines) = 0;
+};
+
 class QCEW_EXPORT QTextParserLine
 {
 public:
@@ -76,7 +82,7 @@ public:
 class QCEW_EXPORT QCodeEditWidget final: public QAbstractScrollArea
 {
     Q_OBJECT
-    Q_PROPERTY(QString Text READ text WRITE setText DESIGNABLE false CONSTANT)
+    Q_PROPERTY(QString Text READ text WRITE setText DESIGNABLE false)
     Q_PROPERTY(int TabSize READ tabSize WRITE setTabSize NOTIFY tabSizeChanged)
 
 public:
@@ -88,7 +94,7 @@ public:
 
     QString text() const;
     int tabSize() const;
-    void setFileExtension(const QString &extension);
+    void setFormatter(QCodeEditWidgetFormatter *formatter);
     void clearFormatting();
     void addFormat(int line, const QTextParserColorItem &item);
     void setBreakpoint(int line, QBreakpointType type);
@@ -138,6 +144,7 @@ private:
     QPixmap m_BreakPointPixmapPending;
     QPixmap m_BreakPointPixmapDisabled;
     QList<QCodeEditWidgetLine> m_Lines;
+    QCodeEditWidgetFormatter *m_Formatter = nullptr;
 
     int m_ScrollXCharPos = 0;
     int m_ScrollYLinePos = 0;

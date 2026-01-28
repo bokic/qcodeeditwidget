@@ -235,6 +235,12 @@ QCodeEditWidget::QCodeEditWidget(QWidget *parent)
 QCodeEditWidget::~QCodeEditWidget()
 {
     killTimer(m_CursorTimerID);
+
+    if (m_Formatter)
+    {
+        delete m_Formatter;
+        m_Formatter = nullptr;
+    }
 }
 
 void QCodeEditWidget::timerEvent(QTimerEvent *event)
@@ -498,6 +504,11 @@ void QCodeEditWidget::keyPressEvent(QKeyEvent *event)
 
     if (l_TextUpdated) {
         updatePanelWidth();
+
+        if (m_Formatter)
+        {
+            m_Formatter->format(m_Lines);
+        }
 
         emit text_change();
     } else {
@@ -1095,8 +1106,26 @@ int QCodeEditWidget::tabSize() const
     return m_tabSize;
 }
 
-void QCodeEditWidget::setFileExtension(const QString &extension)
+void QCodeEditWidget::setFormatter(QCodeEditWidgetFormatter *formatter)
 {
+    if (m_Formatter)
+    {
+        delete m_Formatter;
+    }
+
+    m_Formatter = formatter;
+
+    for(auto &line: m_Lines)
+    {
+        line.colors.clear();
+    }
+
+    if (m_Formatter)
+    {
+        m_Formatter->format(m_Lines);
+    }
+
+    update();
 }
 
 void QCodeEditWidget::setText(QString text)

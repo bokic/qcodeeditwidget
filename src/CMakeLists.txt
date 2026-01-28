@@ -6,7 +6,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
@@ -22,6 +22,8 @@ add_library(qcodeeditwidget SHARED
     ../include/QCodeEditWidget/qcodeeditwidget.h
 )
 
+target_compile_definitions(qcodeeditwidget PRIVATE QCEW_SHARED_EXPORT)
+
 target_include_directories(qcodeeditwidget PUBLIC
     ../include
 )
@@ -35,6 +37,3 @@ set_target_properties(qcodeeditwidget PROPERTIES
     VERSION "0.5.1"
     SOVERSION "0.5"
 )
-
-target_compile_definitions(qcodeeditwidget PRIVATE QCEW_SHARED_EXPORT)
-
